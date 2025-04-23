@@ -26,10 +26,13 @@ FPS = 60
 class Carro(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.Surface((50, 80))
-        self.image.fill(BLUE)
+        # Cargar la imagen del carro (asegúrate de tener el archivo "carro.png" en el directorio)
+        self.image = pygame.image.load("pngegg.png")  # Asegúrate de que esta ruta sea correcta
+        self.image = pygame.transform.scale(self.image, (150, 100))  # Cambiar el tamaño si es necesario
+
         self.rect = self.image.get_rect()
         self.rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT - 100)
+        
         self.speed = 6.5
         self.invulnerable = False  # Estado de inmunidad
         self.invulnerable_time = 0  # Tiempo de activación de la inmunidad
@@ -53,8 +56,8 @@ class Carro(pygame.sprite.Sprite):
 class Obstaculo(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.Surface((40, 40))
-        self.image.fill(RED)
+        self.image = pygame.image.load("afanador.png")
+        self.image = pygame.transform.scale(self.image, (60,60))
         self.rect = self.image.get_rect()
         self.rect.x = random.randint(0, SCREEN_WIDTH - 50)
         self.rect.y = -50
@@ -70,8 +73,8 @@ class Obstaculo(pygame.sprite.Sprite):
 class PowerUp(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.Surface((30, 30))
-        self.image.fill(GREEN)
+        self.image = pygame.image.load("powerup.png")  
+        self.image = pygame.transform.scale(self.image, (50, 50))
         self.rect = self.image.get_rect()
         self.rect.x = random.randint(0, SCREEN_WIDTH - 30)
         self.rect.y = -30
@@ -153,12 +156,11 @@ def juego():
             carro.invulnerable_time = time.time()  # Registrar el tiempo de activación
             power_up_activo = True
 
-        # Aumentar la puntuación por el tiempo que pasa si el power-up está activo
-        if carro.invulnerable:
-            puntuacion += 1  # Aumentar puntos por segundo mientras la inmunidad está activa
+        # Aumentar la puntuación con el tiempo (independientemente del estado de power-up)
+        puntuacion += 1 / 1  # Suma 1 punto por segundo aproximadamente
 
         # Mostrar la puntuación
-        mostrar_texto(f"Puntuación: {puntuacion}", 30, BLACK, 10, 10)
+        mostrar_texto(f"Puntuación: {int(puntuacion)}", 30, BLACK, 10, 10)
 
         # Dibujar todos los sprites
         all_sprites.draw(screen)
