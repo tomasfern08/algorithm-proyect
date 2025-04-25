@@ -1,16 +1,15 @@
-import pygame
+import pygame 
 import random
 import time
 
 # Inicialización de pygame
 pygame.init()
+pygame.mixer.init()  # Inicializa el módulo de audio
 
 # Colores
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
 
 # Configuración de la pantalla
 SCREEN_WIDTH = 800
@@ -22,23 +21,29 @@ pygame.display.set_caption("Carrera y Obstáculos")
 clock = pygame.time.Clock()
 FPS = 60
 
-# Definición de la clase para el carro
+# Variables para las líneas de carretera
+linea_ancho = 10
+linea_alto = 40
+espacio_lineas = 30
+velocidad_lineas = 5
+
+# Crear lista de líneas
+lineas = []
+for i in range(0, SCREEN_HEIGHT, linea_alto + espacio_lineas):
+    lineas.append(i)
+
 class Carro(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        # Cargar la imagen del carro (asegúrate de tener el archivo "carro.png" en el directorio)
-        self.image = pygame.image.load("pngegg.png")  # Asegúrate de que esta ruta sea correcta
-        self.image = pygame.transform.scale(self.image, (150, 100))  # Cambiar el tamaño si es necesario
-
+        self.image = pygame.image.load("pngegg.png")
+        self.image = pygame.transform.scale(self.image, (150, 100))
         self.rect = self.image.get_rect()
         self.rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT - 100)
-        
         self.speed = 6.5
-        self.invulnerable = False  # Estado de inmunidad
-        self.invulnerable_time = 0  # Tiempo de activación de la inmunidad
+        self.invulnerable = False
+        self.invulnerable_time = 0
 
     def update(self, keys):
-        # Mover el carro con las teclas de dirección
         if keys[pygame.K_LEFT] and self.rect.left > 0:
             self.rect.x -= self.speed
         if keys[pygame.K_RIGHT] and self.rect.right < SCREEN_WIDTH:
@@ -48,16 +53,14 @@ class Carro(pygame.sprite.Sprite):
         if keys[pygame.K_DOWN] and self.rect.bottom < SCREEN_HEIGHT:
             self.rect.y += self.speed
 
-        # Verificar si el poder de inmunidad ha expirado
-        if self.invulnerable and time.time() - self.invulnerable_time > 3:  # 3 segundos de inmunidad
+        if self.invulnerable and time.time() - self.invulnerable_time > 3:
             self.invulnerable = False
 
-# Definición de la clase para los obstáculos
 class Obstaculo(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = pygame.image.load("afanador.png")
-        self.image = pygame.transform.scale(self.image, (60,60))
+        self.image = pygame.transform.scale(self.image, (60, 60))
         self.rect = self.image.get_rect()
         self.rect.x = random.randint(0, SCREEN_WIDTH - 50)
         self.rect.y = -50
@@ -69,11 +72,10 @@ class Obstaculo(pygame.sprite.Sprite):
             self.rect.y = -50
             self.rect.x = random.randint(0, SCREEN_WIDTH - 50)
 
-# Definición de la clase para los power-ups
 class PowerUp(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.image.load("powerup.png")  
+        self.image = pygame.image.load("powerup.png")
         self.image = pygame.transform.scale(self.image, (50, 50))
         self.rect = self.image.get_rect()
         self.rect.x = random.randint(0, SCREEN_WIDTH - 30)
@@ -86,92 +88,74 @@ class PowerUp(pygame.sprite.Sprite):
             self.rect.y = -30
             self.rect.x = random.randint(0, SCREEN_WIDTH - 30)
 
-# Función para mostrar texto en pantalla
 def mostrar_texto(texto, tamaño, color, x, y):
     font = pygame.font.SysFont("arial", tamaño)
     texto_surface = font.render(texto, True, color)
     screen.blit(texto_surface, (x, y))
 
-# Función principal del juego
 def juego():
-    # Crear los grupos de sprites
     all_sprites = pygame.sprite.Group()
     obstacles = pygame.sprite.Group()
     power_ups = pygame.sprite.Group()
 
-    # Crear el carro
     carro = Carro()
     all_sprites.add(carro)
 
-    # Variables de puntuación
     puntuacion = 0
-    tiempo_power_up = 0  # Control del tiempo desde que se recogió el power-up
-    power_up_activo = False
-
-    # Bucle principal del juego
     game_running = True
+
     while game_running:
-        screen.fill(WHITE)
-        
-        # Comprobar eventos
+        screen.fill(BLACK)
+
+        for i in range(len(lineas)):
+            pygame.draw.rect(screen, WHITE, (SCREEN_WIDTH//2 - linea_ancho//2, lineas[i], linea_ancho, linea_alto))
+            lineas[i] += velocidad_lineas
+            if lineas[i] > SCREEN_HEIGHT:
+                lineas[i] = -linea_alto
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game_running = False
 
-        # Obtener las teclas presionadas
         keys = pygame.key.get_pressed()
-
-        # Actualizar el carro
         carro.update(keys)
 
-        # Crear obstáculos y power-ups con menor frecuencia
-        if random.random() < 0.01:  # Reducir la frecuencia de obstáculos
+        if random.random() < 0.01:
             obstaculo = Obstaculo()
             all_sprites.add(obstaculo)
             obstacles.add(obstaculo)
 
-        if random.random() < 0.005:  # Reducir la frecuencia de power-ups
+        if random.random() < 0.005:
             power_up = PowerUp()
             all_sprites.add(power_up)
             power_ups.add(power_up)
 
-        # Actualizar obstáculos y power-ups
         obstacles.update()
         power_ups.update()
 
-        # Comprobar colisiones con obstáculos
         if pygame.sprite.spritecollide(carro, obstacles, False):
-            # Si el jugador no es invulnerable, se acaba el juego
             if not carro.invulnerable:
-                mostrar_texto("¡GAME OVER!", 50, RED, SCREEN_WIDTH // 3, SCREEN_HEIGHT // 2)
+                # 👇 Reproducir sonido de Game Over
+                pygame.mixer.music.load("WhatsApp Ptt 2025-04-25 at 9.36.53 AM.mp3")
+                pygame.mixer.music.play()
+
+                mostrar_texto("¡GAME OVER, BROTHER!", 50, RED, SCREEN_WIDTH // 5 , SCREEN_HEIGHT // 2.25)
                 pygame.display.update()
                 time.sleep(2)
                 game_running = False
 
-        # Comprobar si se recoge un power-up
         power_up_colision = pygame.sprite.spritecollide(carro, power_ups, True)
         if power_up_colision:
-            puntuacion += 10  # Sumar puntos al recoger el power-up
-            carro.invulnerable = True  # Activar inmunidad
-            carro.invulnerable_time = time.time()  # Registrar el tiempo de activación
-            power_up_activo = True
+            puntuacion += 10
+            carro.invulnerable = True
+            carro.invulnerable_time = time.time()
 
-        # Aumentar la puntuación con el tiempo (independientemente del estado de power-up)
-        puntuacion += 1 / 1  # Suma 1 punto por segundo aproximadamente
-
-        # Mostrar la puntuación
-        mostrar_texto(f"Puntuación: {int(puntuacion)}", 30, BLACK, 10, 10)
-
-        # Dibujar todos los sprites
+        puntuacion += 1 / 1
+        mostrar_texto(f"Puntuación: {int(puntuacion)}", 30, WHITE, 10, 10)
         all_sprites.draw(screen)
-
-        # Actualizar pantalla
         pygame.display.update()
-
-        # Control de FPS
         clock.tick(FPS)
 
-# Ejecutar el juego
 if __name__ == "__main__":
     juego()
     pygame.quit()
