@@ -1,10 +1,10 @@
-import pygame 
+import pygame
 import random
 import time
 
 # Inicialización de pygame
 pygame.init()
-pygame.mixer.init()  # Inicializa el módulo de audio
+pygame.mixer.init()
 
 # Colores
 WHITE = (255, 255, 255)
@@ -21,16 +21,12 @@ pygame.display.set_caption("Carrera y Obstáculos")
 clock = pygame.time.Clock()
 FPS = 60
 
-# Variables para las líneas de carretera
+# Líneas de carretera
 linea_ancho = 10
 linea_alto = 40
 espacio_lineas = 30
 velocidad_lineas = 5
-
-# Crear lista de líneas
-lineas = []
-for i in range(0, SCREEN_HEIGHT, linea_alto + espacio_lineas):
-    lineas.append(i)
+lineas = [i for i in range(0, SCREEN_HEIGHT, linea_alto + espacio_lineas)]
 
 class Carro(pygame.sprite.Sprite):
     def __init__(self):
@@ -56,6 +52,13 @@ class Carro(pygame.sprite.Sprite):
         if self.invulnerable and time.time() - self.invulnerable_time > 3:
             self.invulnerable = False
 
+    def get_hitbox(self):
+        return self.rect.inflate(-50, -30)
+
+    def draw(self, surface):
+        if not self.invulnerable or int(time.time() * 10) % 2 == 0:
+            surface.blit(self.image, self.rect)
+
 class Obstaculo(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -71,6 +74,9 @@ class Obstaculo(pygame.sprite.Sprite):
         if self.rect.top > SCREEN_HEIGHT:
             self.rect.y = -50
             self.rect.x = random.randint(0, SCREEN_WIDTH - 50)
+
+    def get_hitbox(self):
+        return self.rect.inflate(-20, -20)
 
 class PowerUp(pygame.sprite.Sprite):
     def __init__(self):
@@ -99,6 +105,9 @@ def juego():
     power_ups = pygame.sprite.Group()
 
     carro = Carro()
+    motor_sonido = pygame.mixer.Sound("engine-61234.mp3")
+    motor_sonido.set_volume(0.3)
+    motor_sonido.play(loops=-1)
     all_sprites.add(carro)
 
     puntuacion = 0
@@ -120,10 +129,11 @@ def juego():
         keys = pygame.key.get_pressed()
         carro.update(keys)
 
-        if random.random() < 0.01:
-            obstaculo = Obstaculo()
-            all_sprites.add(obstaculo)
-            obstacles.add(obstaculo)
+        if len(obstacles) < 6:
+            if random.random() < 0.01:
+                obstaculo = Obstaculo()
+                all_sprites.add(obstaculo)
+                obstacles.add(obstaculo)
 
         if random.random() < 0.005:
             power_up = PowerUp()
@@ -133,12 +143,10 @@ def juego():
         obstacles.update()
         power_ups.update()
 
-        if pygame.sprite.spritecollide(carro, obstacles, False):
+        if any(obst.get_hitbox().colliderect(carro.get_hitbox()) for obst in obstacles):
             if not carro.invulnerable:
-                # 👇 Reproducir sonido de Game Over
                 pygame.mixer.music.load("WhatsApp Ptt 2025-04-25 at 9.36.53 AM.mp3")
                 pygame.mixer.music.play()
-
                 mostrar_texto("¡GAME OVER, BROTHER!", 50, RED, SCREEN_WIDTH // 5 , SCREEN_HEIGHT // 2.25)
                 pygame.display.update()
                 time.sleep(2)
@@ -149,12 +157,21 @@ def juego():
             puntuacion += 10
             carro.invulnerable = True
             carro.invulnerable_time = time.time()
+            pygame.mixer.Sound("coin-upaif-14631.mp3").play()
 
-        puntuacion += 1 / 1
+        puntuacion += 1
         mostrar_texto(f"Puntuación: {int(puntuacion)}", 30, WHITE, 10, 10)
-        all_sprites.draw(screen)
+
+        for sprite in all_sprites:
+            if isinstance(sprite, Carro):
+                sprite.draw(screen)
+            else:
+                screen.blit(sprite.image, sprite.rect)
+
         pygame.display.update()
         clock.tick(FPS)
+
+    motor_sonido.stop()
 
 if __name__ == "__main__":
     juego()
