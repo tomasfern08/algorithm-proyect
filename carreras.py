@@ -94,6 +94,10 @@ class PowerUp(pygame.sprite.Sprite):
             self.rect.y = -30
             self.rect.x = random.randint(0, SCREEN_WIDTH - 30)
 
+    def get_hitbox(self):
+        return self.rect.inflate(-20, -20)  # Más pequeño
+
+
 class RaraVez(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -108,6 +112,10 @@ class RaraVez(pygame.sprite.Sprite):
         self.rect.y += self.speed
         if self.rect.top > SCREEN_HEIGHT:
             self.kill()
+
+    def get_hitbox(self):
+        return self.rect.inflate(-10, -10)  # Más pequeño
+    
 
 def mostrar_texto(texto, tamaño, color, x, y):
     font = pygame.font.SysFont("arial", tamaño)
@@ -155,7 +163,7 @@ def juego():
                 all_sprites.add(obstaculo)
                 obstacles.add(obstaculo)
 
-        if random.random() < 0.005:
+        if random.random() < 0.003:
             power_up = PowerUp()
             all_sprites.add(power_up)
             power_ups.add(power_up)
@@ -178,24 +186,31 @@ def juego():
                 time.sleep(2)
                 game_running = False
 
-        power_up_colision = pygame.sprite.spritecollide(carro, power_ups, True)
+        power_up_colision = any(p.get_hitbox().colliderect(carro.get_hitbox()) for p in power_ups)
         if power_up_colision:
+            for p in power_ups:
+                if p.get_hitbox().colliderect(carro.get_hitbox()):
+                 power_ups.remove(p)
+                 all_sprites.remove(p)
             puntuacion += 10
             carro.invulnerable = True
             carro.invulnerable_time = time.time()
             pygame.mixer.Sound("coin-upaif-14631.mp3").play()
 
-        colision_rara = pygame.sprite.spritecollide(carro, raros, True)
+        colision_rara = any(r.get_hitbox().colliderect(carro.get_hitbox()) for r in raros)
         if colision_rara and not efecto_lentitud_activo:
-            efecto_lentitud_activo = True
-            tiempo_lentitud = time.time()
-            velocidad_original.clear()
+             for r in raros:
+                if r.get_hitbox().colliderect(carro.get_hitbox()):
+                    raros.remove(r)
+                    all_sprites.remove(r)
+             efecto_lentitud_activo = True
+             tiempo_lentitud = time.time()
+             velocidad_original.clear()
 
-            for obstaculo in obstacles:
+             for obstaculo in obstacles:
                 velocidad_original[obstaculo] = obstaculo.speed
                 obstaculo.speed = max(1, obstaculo.speed - 3)
-
-            pygame.mixer.Sound("WhatsApp Ptt 2025-05-06 at 2-VEED.mp3").play()
+             pygame.mixer.Sound("WhatsApp Ptt 2025-05-06 at 2-VEED.mp3").play()
 
         # Restaurar velocidad original después de 5 segundos
         if efecto_lentitud_activo and time.time() - tiempo_lentitud > 5:
