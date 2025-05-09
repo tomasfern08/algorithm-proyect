@@ -10,7 +10,7 @@ pygame.mixer.init()
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
-
+BLUE = (0, 255 ,0)
 # Configuración de la pantalla
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
@@ -122,6 +122,24 @@ def mostrar_texto(texto, tamaño, color, x, y):
     texto_surface = font.render(texto, True, color)
     screen.blit(texto_surface, (x, y))
 
+
+def pantalla_inicio():
+    esperando = True
+    while esperando:
+        screen.fill(BLACK)
+        mostrar_texto("AFANADOR RACING", 60, BLUE, SCREEN_WIDTH//4.8, SCREEN_HEIGHT//4)
+        mostrar_texto("Presiona una tecla para empezar", 36, WHITE, SCREEN_WIDTH//4.3, SCREEN_HEIGHT//2.2)
+        mostrar_texto("(Usa las flechas para moverte)", 28, WHITE, SCREEN_WIDTH//3.2, SCREEN_HEIGHT//1.6)
+        mostrar_texto("Consejos: Evita a los afanadores mas no al brr brr afanador y las estrellas, estas te ayudaran.", 28, WHITE, SCREEN_WIDTH//20, SCREEN_HEIGHT//1.4)
+        mostrar_texto(" estas te ayudaran.", 28, WHITE, SCREEN_WIDTH//2.6, SCREEN_HEIGHT//1.3)
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.KEYDOWN:
+                esperando = False
 def juego():
     all_sprites = pygame.sprite.Group()
     obstacles = pygame.sprite.Group()
@@ -234,5 +252,6 @@ def juego():
     motor_sonido.stop()
 
 if __name__ == "__main__":
+    pantalla_inicio()
     juego()
     pygame.quit()
