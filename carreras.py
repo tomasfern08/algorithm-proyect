@@ -17,16 +17,17 @@ SCREEN_HEIGHT = 600
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Carrera y Obstáculos")
 
+# Antes del bucle principal
+fondo = pygame.image.load("Carreras1.png").convert()
+fondo = pygame.transform.scale(fondo, (SCREEN_WIDTH, SCREEN_HEIGHT * 2))
+fondo_y = -SCREEN_HEIGHT
+velocidad_fondo = 5  # Nueva variable para el fondo
+
 # FPS
 clock = pygame.time.Clock()
 FPS = 60
 
-# Líneas de carretera
-linea_ancho = 10
-linea_alto = 40
-espacio_lineas = 30
-velocidad_lineas = 5
-lineas = [i for i in range(0, SCREEN_HEIGHT, linea_alto + espacio_lineas)]
+
 
 class Carro(pygame.sprite.Sprite):
     def __init__(self):
@@ -146,6 +147,12 @@ def juego():
     power_ups = pygame.sprite.Group()
     raros = pygame.sprite.Group()
 
+    # Cargar fondo y variables asociadas
+    fondo = pygame.image.load("Carreras1.png").convert()
+    fondo = pygame.transform.scale(fondo, (SCREEN_WIDTH, SCREEN_HEIGHT * 2))
+    fondo_y = -SCREEN_HEIGHT
+    velocidad_fondo = 5
+
     carro = Carro()
     motor_sonido = pygame.mixer.Sound("engine-61234.mp3")
     motor_sonido.set_volume(0.3)
@@ -160,13 +167,15 @@ def juego():
     velocidad_original = {}
 
     while game_running:
-        screen.fill(BLACK)
+        # Mover el fondo
+        fondo_y += velocidad_fondo
+        if fondo_y >= 0:
+            fondo_y = -SCREEN_HEIGHT
 
-        for i in range(len(lineas)):
-            pygame.draw.rect(screen, WHITE, (SCREEN_WIDTH//2 - linea_ancho//2, lineas[i], linea_ancho, linea_alto))
-            lineas[i] += velocidad_lineas
-            if lineas[i] > SCREEN_HEIGHT:
-                lineas[i] = -linea_alto
+        # Dibujar el fondo
+        screen.blit(fondo, (0, fondo_y))
+
+       
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
